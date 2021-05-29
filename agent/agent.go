@@ -28,7 +28,10 @@ type cmdFlags struct {
 	Token           string
 }
 
-var flags cmdFlags
+var (
+	flags    cmdFlags
+	reporter report.Reporter
+)
 
 func init() {
 	flag.StringVarP(&flags.MonitorIP, "monitorip", "i", "", "ip to be monitored")
@@ -60,7 +63,7 @@ func main() {
 	stopCh := make(chan os.Signal, 1)
 	signal.Notify(stopCh, os.Interrupt, syscall.SIGTERM)
 
-	reporter := report.NewInfluxDBReporter(flags.DBUrl, flags.Organization, flags.Bucket, flags.Token)
+	reporter = report.NewInfluxDBReporter(flags.DBUrl, flags.Organization, flags.Bucket, flags.Token)
 	defer reporter.Close()
 
 	processInfo, err := process.NewProcessInfo(flags.MonitorPid, flags.MonitorService, flags.MonitorIP)
