@@ -43,7 +43,7 @@ func Netstat(protocal string, process *ProcessInfo) {
 		// local ip and port
 		line_array := removeEmpty(strings.Split(strings.TrimSpace(line), " "))
 		//check if the pid is what we want
-		if fmt.Sprint(process.ProcessID) != findPid(line_array[9]) {
+		if fmt.Sprint(process.Fields.ProcessID) != findPid(line_array[9]) {
 			continue
 		}
 		ip_port := strings.Split(line_array[1], ":")
@@ -61,8 +61,8 @@ func Netstat(protocal string, process *ProcessInfo) {
 		// itemid index pcap Map
 		itemId := fmt.Sprintf("%s:%v-%s:%v", ip, port, fip, fport)
 		if v, ok := packet.PkgAcc[itemId]; ok {
-			process.NetReadRate = v["inRate"]
-			process.NetWriteRate = v["inRate"]
+			process.Fields.NetReadRate = v["inRate"]
+			process.Fields.NetWriteRate = v["inRate"]
 		}
 	}
 }
