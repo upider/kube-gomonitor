@@ -34,6 +34,9 @@ func (reporter *InfluxDBReporter) Start(ctx context.Context) {
 			default:
 				reporter.processInfo.Update()
 				reporter.Report()
+				if reporter.processInfo.Fields.Status == "T" {
+					return
+				}
 				time.Sleep(time.Duration(reporter.reportInterval) * time.Second)
 			}
 		}
