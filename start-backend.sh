@@ -1,0 +1,1 @@
+go run backend/backend.go -i 192.168.37.204 --monitorservices test-service -d 10.2.201.22:30093 -i 192.168.37.204 -o default -b test -t tn6Wzb0myOEdfDgssoHVhi4Mxt4em8jCEO6GBzYzde5bZeEcmXkMgZqLovyPQCYM9KZhin-7A1mYktcdnntL9g==

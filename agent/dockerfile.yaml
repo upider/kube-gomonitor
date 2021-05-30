@@ -1,0 +1,16 @@
+FROM centos:7 AS dev
+WORKDIR /root/src/
+COPY ./ /root/src/
+RUN export GOPROXY=https://goproxy.cn && \
+        export GO111MODULE=on && \
+        yum install -y deltarpm epel-release && \
+        yum install -y go && \
+        yum install -y libpcap-devel && \
+        go build -o gomonitor-agent agent/agent.go
+
+FROM alpine:latest AS prod
+WORKDIR /root/
+COPY agent/entrypoint.sh .
+COPY --from=dev /root/src/agent .
+RUN chmod +x entrypoint.sh
+ENTRYPOINT ["./entrypoint.sh"]

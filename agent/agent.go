@@ -40,10 +40,10 @@ func init() {
 	flag.Int64VarP(&flags.MonitorInterval, "monitorinterval", "l", 1, "interval seconds to send monitor info")
 	flag.BoolVarP(&flags.Help, "help", "h", false, "gomonitor help")
 
-	flag.StringVarP(&flags.DBUrl, "dburl", "d", "", "ip to be monitored")
-	flag.StringVarP(&flags.Bucket, "bucket", "b", "", "ip to be monitored")
-	flag.StringVarP(&flags.Organization, "organization", "o", "", "ip to be monitored")
-	flag.StringVarP(&flags.Token, "token", "t", "", "ip to be monitored")
+	flag.StringVarP(&flags.DBUrl, "dburl", "d", "", "data base url")
+	flag.StringVarP(&flags.Bucket, "bucket", "b", "", "data base bucket for influxdb")
+	flag.StringVarP(&flags.Organization, "organization", "o", "", "data base org for influxdb")
+	flag.StringVarP(&flags.Token, "token", "t", "", "data base token for influxdb")
 }
 
 func main() {

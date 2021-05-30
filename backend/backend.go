@@ -15,17 +15,8 @@ import (
 	flag "github.com/spf13/pflag"
 )
 
-type cmdFlags struct {
-	NacosIP             string
-	NacosPort           uint64
-	NamespaceId         string
-	ServerIP            string
-	MonitorServices     []string
-	MonitorServiceGroup string
-}
-
 var (
-	flags cmdFlags
+	flags server.ServerFlags
 	//nacos默认配置
 	logDir     string = "/tmp/nacos/log"
 	cacheDir   string = "/tmp/nacos/cache"
@@ -44,6 +35,11 @@ func init() {
 	flag.StringArrayVar(&flags.MonitorServices, "monitorservices", nil, "monitor service names")
 	flag.Uint64VarP(&flags.NacosPort, "nacosport", "p", 8848, "nacos server port")
 	flag.StringVarP(&flags.NamespaceId, "namespace", "n", "public", "nacos namespace id (not namespace name)")
+
+	flag.StringVarP(&flags.DBUrl, "dburl", "d", "", "data base url")
+	flag.StringVarP(&flags.Bucket, "bucket", "b", "", "data base bucket for influxdb")
+	flag.StringVarP(&flags.Organization, "organization", "o", "", "data base org for influxdb")
+	flag.StringVarP(&flags.Token, "token", "t", "", "data base token for influxdb")
 }
 
 func main() {
@@ -53,7 +49,8 @@ func main() {
 		log.Info("running on bare metal")
 		flag.Parse()
 		log.Info(flags.MonitorServices)
-		if flags.NacosIP == "" || flags.NamespaceId == "" || flags.MonitorServices == nil {
+		if flags.NacosIP == "" || flags.NamespaceId == "" ||
+			flags.MonitorServices == nil || flags.DBUrl == "" {
 			flag.Usage()
 			return
 		}
@@ -78,7 +75,7 @@ func main() {
 		monitorServer, err = server.NewBareMetalServer(vo.NacosClientParam{
 			ClientConfig:  &cc,
 			ServerConfigs: sc,
-		}, flags.NacosIP, flags.NacosPort, flags.MonitorServices, flags.MonitorServiceGroup)
+		}, &flags)
 
 		if err != nil {
 			log.Errorln(err)
