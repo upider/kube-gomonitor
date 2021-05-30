@@ -7,11 +7,11 @@ import (
 	"gomonitor/agent/report"
 	"os"
 	"os/signal"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
 	"syscall"
-	"time"
 
 	flag "github.com/spf13/pflag"
 )
@@ -57,37 +57,24 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
 
 	go packet.NetSniff(ctx, flags.MonitorIP)
 
 	stopCh := make(chan os.Signal, 1)
 	signal.Notify(stopCh, os.Interrupt, syscall.SIGTERM)
 
-	reporter = report.NewInfluxDBReporter(flags.DBUrl, flags.Organization, flags.Bucket, flags.Token)
-	defer reporter.Close()
-
 	processInfo, err := process.NewProcessInfo(flags.MonitorPid, flags.MonitorService, flags.MonitorIP)
 	if err != nil {
 		log.Error(err)
-		cancel()
 		return
 	}
 
-	go func() {
-		for {
-			select {
-			case <-ctx.Done():
-				return
-			default:
-				processInfo.Update()
-				reporter.Report(processInfo)
-				time.Sleep(time.Duration(flags.MonitorInterval) * time.Second)
-			}
-		}
-	}()
+	reporter = report.NewInfluxDBReporter(flags.DBUrl, flags.Organization, flags.Bucket, flags.Token, flags.MonitorInterval, processInfo)
+	defer reporter.Close()
+
+	reporter.Start(ctx)
 
 	<-stopCh
-	cancel()
-	//wait for resources released
 	time.Sleep(5 * time.Second)
 }

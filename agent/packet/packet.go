@@ -162,11 +162,11 @@ func NetSniff(ctx context.Context, ipAddr string) {
 }
 
 func accumulator(ctx context.Context) {
-	log.Infoln("Accumulator thread is starting...")
+	log.Infoln("net accumulator thread is starting...")
 	for {
 		select {
 		case <-ctx.Done():
-			log.Warningln("Accumulator thread is stop.")
+			log.Warningln("net accumulator thread is stop.")
 			Start = false
 			return
 		default:

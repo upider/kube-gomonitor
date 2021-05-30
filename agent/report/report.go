@@ -1,8 +1,11 @@
 package report
 
-import "gomonitor/agent/process"
+import (
+	"context"
+)
 
 type Reporter interface {
+	Start(ctx context.Context)
 	Close()
-	Report(processInfo *process.ProcessInfo)
+	Report()
 }
