@@ -8,6 +8,7 @@ import (
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
 	"github.com/influxdata/influxdb-client-go/v2/api"
+	log "github.com/sirupsen/logrus"
 )
 
 //InfluxDBReporter write info into InfluxDB
@@ -24,9 +25,11 @@ type InfluxDBReporter struct {
 
 func (reporter *InfluxDBReporter) Start(ctx context.Context) {
 	go func() {
+		log.Info("start reporter ...")
 		for {
 			select {
 			case <-ctx.Done():
+				log.Info("stop reporter ...")
 				return
 			default:
 				reporter.processInfo.Update()

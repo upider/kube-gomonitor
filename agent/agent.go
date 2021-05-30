@@ -57,7 +57,6 @@ func main() {
 	}
 
 	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
 
 	go packet.NetSniff(ctx, flags.MonitorIP)
 
@@ -76,5 +75,6 @@ func main() {
 	reporter.Start(ctx)
 
 	<-stopCh
+	cancel()
 	time.Sleep(5 * time.Second)
 }
