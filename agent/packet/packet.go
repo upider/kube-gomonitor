@@ -53,7 +53,7 @@ func GetPcapHandle(ip string) (*pcap.Handle, error) {
 		}
 	}
 	if device == "" {
-		return nil, errors.New("find device error")
+		return nil, errors.New("can't find net device for ip: " + ip)
 	}
 
 	h, err := pcap.OpenLive(device, snapshot_len, promiscuous, timeout)

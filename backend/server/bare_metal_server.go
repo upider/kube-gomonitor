@@ -2,9 +2,12 @@ package server
 
 import (
 	"context"
+	"net/http"
+	"time"
 
 	log "github.com/sirupsen/logrus"
 
+	"github.com/docker/docker/api/types"
 	"github.com/docker/docker/api/types/container"
 	dockerClient "github.com/docker/docker/client"
 
@@ -82,8 +85,8 @@ func (server *BareMetalServer) callback(services []model.SubscribeService, err e
 		pid := service.Metadata["pid"]
 		ip := service.Ip
 		serviceName := service.ServiceName
-		log.Info("start monitor prog on ip " + ip + " for " + pid)
 		go func() {
+			log.Info("start monitor prog on ip " + ip + " for " + pid)
 			server.startMonitorProg(ip, pid, serviceName)
 		}()
 	}
@@ -91,32 +94,67 @@ func (server *BareMetalServer) callback(services []model.SubscribeService, err e
 
 //在对应ip启动monitor进程
 func (server *BareMetalServer) startMonitorProg(ip string, pid string, serviceName string) {
-	cli, err := dockerClient.NewClient(ip, "1.13.1", nil, nil)
+	tr := &http.Transport{
+		MaxIdleConns:       10,
+		IdleConnTimeout:    30 * time.Second,
+		DisableCompression: false,
+	}
+	httpClient := &http.Client{Transport: tr}
+	cli, err := dockerClient.NewClient("http://"+ip+":2375", "1.41", httpClient, nil)
 
 	if err != nil {
-		log.Error(err)
+		log.Error("new client error: " + err.Error())
 		return
 	}
 
 	ctx := context.Background()
 	//容器网络设置为hostnetwork
 	//并设置环境变量
-	envs := []string{"MONITOR_PID=" + ip, "MONITOR_SERVICE=" + serviceName, "MONITOR_PID=" + pid,
+	envs := []string{"MONITOR_IP=" + ip, "MONITOR_SERVICE=" + serviceName, "MONITOR_PID=" + pid,
 		"REPORT_DBURL=" + server.flags.DBUrl, "REPORT_DBBUCKET=" + server.flags.Bucket,
 		"REPORT_DBORG=" + server.flags.Organization, "REPORT_DBTOKEN=" + server.flags.Token}
 
-	cli.ContainerCreate(ctx, &container.Config{
-		Image:      agentImage,
-		User:       "root",
-		WorkingDir: "/root",
-		Env:        envs,
+	out, err := cli.ImagePull(ctx, agentImage, types.ImagePullOptions{})
+	if err != nil {
+		log.Error("container pull error: " + err.Error())
+		return
+	}
+	defer out.Close()
+
+	err = cli.ContainerRemove(ctx, "gomonitor", types.ContainerRemoveOptions{
+		Force: true,
+	})
+	if err != nil {
+		log.Warn("container remove error: " + err.Error())
+		// return
+	}
+
+	container, err := cli.ContainerCreate(ctx, &container.Config{
+		Image: agentImage,
+		User:  "root",
+		Env:   envs,
+		Tty:   true,
 	}, &container.HostConfig{
-		NetworkMode: "host",
+		NetworkMode: "host", //use host PidMode and host NetworkMode, we can get info on the host node
+		Privileged:  true,
+		PidMode:     "host",
+		// AutoRemove:  true, TODO: 容器退出后自动删除, 代码完成后使用该特性
 	}, nil, nil, "gomonitor")
+
+	if err != nil {
+		log.Error("container create error: " + err.Error())
+		return
+	}
 
 	err = cli.Close()
 	if err != nil {
 		log.Error(err)
+		return
+	}
+
+	err = cli.ContainerStart(ctx, container.ID, types.ContainerStartOptions{})
+	if err != nil {
+		log.Error("container start error: " + err.Error())
 		return
 	}
 }

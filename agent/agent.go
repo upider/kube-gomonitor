@@ -34,11 +34,12 @@ var (
 )
 
 func init() {
+	flag.BoolVarP(&flags.Help, "help", "h", false, "gomonitor help")
+
 	flag.StringVarP(&flags.MonitorIP, "monitorip", "i", "", "ip to be monitored")
 	flag.StringVarP(&flags.MonitorService, "monitorservice", "s", "", "service name to be monitored")
 	flag.Int32VarP(&flags.MonitorPid, "monitorpid", "p", -1, "pid to be monitored")
 	flag.Int64VarP(&flags.MonitorInterval, "monitorinterval", "l", 1, "interval seconds to send monitor info")
-	flag.BoolVarP(&flags.Help, "help", "h", false, "gomonitor help")
 
 	flag.StringVarP(&flags.DBUrl, "dburl", "d", "", "data base url")
 	flag.StringVarP(&flags.Bucket, "bucket", "b", "", "data base bucket for influxdb")

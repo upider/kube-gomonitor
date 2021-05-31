@@ -17,6 +17,13 @@ no matter on bare metal or kubernetes
 7. `MONITOR_IP` 要监控进程的ip
 8. `MONITOR_INTERVAL` 监控时间间隔 (second)
 
+构建容器命令：
+```sh
+cd agent
+docker build -t image:tag -f dockerfile.yaml ../
+```
+## server
+
 ## TODO
 
 - [x] agent cmdline flags
