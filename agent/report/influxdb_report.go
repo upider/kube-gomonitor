@@ -3,7 +3,7 @@ package report
 import (
 	"context"
 	"gomonitor/agent/process"
-	"gomonitor/agent/utils"
+	"gomonitor/utils"
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"

@@ -15,6 +15,12 @@ require (
 	github.com/sirupsen/logrus v1.8.1
 	github.com/spf13/pflag v1.0.5
 	github.com/tklauser/go-sysconf v0.3.6 // indirect
+	go.uber.org/zap v1.15.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
 	google.golang.org/grpc v1.38.0 // indirect
+	k8s.io/api v0.20.6
+	k8s.io/apimachinery v0.20.6
+	k8s.io/client-go v0.20.6
+	k8s.io/klog v1.0.0
+	sigs.k8s.io/controller-runtime v0.8.3
 )

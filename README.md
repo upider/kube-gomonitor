@@ -22,13 +22,24 @@ no matter on bare metal or kubernetes
 cd agent
 docker build -t image:tag -f dockerfile.yaml ../
 ```
+
 ## server
+1. 裸机环境和k8s环境实现原理不同，裸机环境依赖nacos，应用需要在nacos注册自己在对应的服务名下，并且把pid写在元数据里
+2. k8s环境中，agent需要检测挂载的配置文件(/tmp/monitor-config.json)，所以应用需要自己创建此文件
+   文件格式：
+   ```json
+    {
+        "pid": 1111,
+        "serviceName": "sssss",
+        "ip": "12.13.41.11",
+    }
+   ```
 
 ## TODO
 
 - [x] agent cmdline flags
 - [x] monitor message storage (influxdb now)
-- [ ] backend monitor service
+- [x] backend monitor service
 - [ ] k8s environment
 
 ## docker sdk reference

@@ -3,7 +3,9 @@ package main
 import (
 	"context"
 	"gomonitor/backend/server"
-	"gomonitor/backend/utils"
+	"gomonitor/backend/server/bare"
+	"gomonitor/backend/server/k8s"
+	"gomonitor/utils"
 	"os"
 	"os/signal"
 	"syscall"
@@ -13,6 +15,7 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
+	"k8s.io/client-go/rest"
 )
 
 var (
@@ -26,7 +29,6 @@ var (
 	timeoutMs  uint64 = 5000
 	//server
 	monitorServer server.MonitorServer
-	err           error
 )
 
 func init() {
@@ -43,14 +45,18 @@ func init() {
 }
 
 func main() {
-	if utils.CheckK8s() {
-		log.Info("running on kubernetes")
-	} else {
+	signalChan := make(chan os.Signal, 1)
+	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
+	ctx, cancel := context.WithCancel(context.Background())
+
+	_, err := utils.CheckInK8s()
+
+	if err == rest.ErrNotInCluster {
 		log.Info("running on bare metal")
 		flag.Parse()
-		log.Info(flags.MonitorServices)
 		if flags.NacosIP == "" || flags.NamespaceId == "" ||
-			flags.MonitorServices == nil || flags.DBUrl == "" {
+			flags.MonitorServices == nil || flags.DBUrl == "" ||
+			flags.Bucket == "" || flags.Organization == "" || flags.Token == "" {
 			flag.Usage()
 			return
 		}
@@ -72,7 +78,7 @@ func main() {
 			LogLevel:            logLevel,
 		}
 
-		monitorServer, err = server.NewBareMetalServer(vo.NacosClientParam{
+		monitorServer, err = bare.NewBareMetalServer(vo.NacosClientParam{
 			ClientConfig:  &cc,
 			ServerConfigs: sc,
 		}, &flags)
@@ -82,13 +88,24 @@ func main() {
 			return
 		}
 
-		stopCh := make(chan os.Signal, 1)
-		signal.Notify(stopCh, os.Interrupt, syscall.SIGTERM)
-		ctx, cancel := context.WithCancel(context.Background())
-
 		monitorServer.Start(ctx)
 
-		<-stopCh
+		<-signalChan
+		cancel()
+		time.Sleep(5 * time.Second)
+
+	} else {
+		log.Info("running on kubernetes")
+		flag.Parse()
+		if flags.DBUrl == "" || flags.Bucket == "" ||
+			flags.Organization == "" || flags.Token == "" {
+			flag.Usage()
+			return
+		}
+		monitorServer = k8s.NewKServer(flags.DBUrl, flags.Bucket, flags.Organization, flags.Token)
+		monitorServer.Start(ctx)
+
+		<-signalChan
 		cancel()
 		time.Sleep(5 * time.Second)
 	}

@@ -1,7 +1,8 @@
-package server
+package bare
 
 import (
 	"context"
+	"gomonitor/backend/server"
 	"net/http"
 	"time"
 
@@ -19,28 +20,14 @@ import (
 
 var agentImage string = "1445277435/gomonitor-agent:v0.0.1"
 
-type ServerFlags struct {
-	NacosIP             string
-	NacosPort           uint64
-	NamespaceId         string
-	ServiceName         string
-	ServerIP            string
-	MonitorServices     []string
-	MonitorServiceGroup string
-	DBUrl               string
-	Organization        string
-	Bucket              string
-	Token               string
-}
-
 //BareMetalServer 裸机环境
 type BareMetalServer struct {
 	NacosNameClient naming_client.INamingClient
-	flags           *ServerFlags
+	flags           *server.ServerFlags
 }
 
 //NewMonitorServer 创建新的BareMetalServer
-func NewBareMetalServer(config vo.NacosClientParam, flags *ServerFlags) (*BareMetalServer, error) {
+func NewBareMetalServer(config vo.NacosClientParam, flags *server.ServerFlags) (*BareMetalServer, error) {
 	var server BareMetalServer
 	server.flags = flags
 	nacosServer, err := clients.NewNamingClient(config)
