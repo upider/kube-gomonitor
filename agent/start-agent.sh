@@ -1,3 +1,4 @@
+#just use it to do some tests
 export MONITOR_PID=32689
 export MONITOR_IP=192.168.37.204
 export MONITOR_SERVICE=DEFAULT_GROUP@@test-service
