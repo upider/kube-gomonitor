@@ -80,7 +80,7 @@ make docker-push
 - [x] agent cmdline flags
 - [x] monitor message storage (influxdb now)
 - [x] backend monitor service
-- [ ] k8s environment
+- [x] k8s environment
 
 ## Reference
 - _[docker sdk reference](https://docs.docker.com/engine/api/v1.41/)_
