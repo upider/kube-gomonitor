@@ -7,6 +7,7 @@ require (
 	github.com/containerd/containerd v1.5.2 // indirect
 	github.com/docker/docker v20.10.6+incompatible
 	github.com/docker/go-connections v0.4.0 // indirect
+	github.com/go-logr/logr v0.3.0
 	github.com/go-ole/go-ole v1.2.5 // indirect
 	github.com/google/gopacket v1.1.19
 	github.com/influxdata/influxdb-client-go/v2 v2.3.0
@@ -20,6 +21,7 @@ require (
 	google.golang.org/grpc v1.38.0 // indirect
 	k8s.io/api v0.20.6
 	k8s.io/apimachinery v0.20.6
+	k8s.io/apiserver v0.20.6
 	k8s.io/client-go v0.20.6
 	sigs.k8s.io/controller-runtime v0.8.3
 )

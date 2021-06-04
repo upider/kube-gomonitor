@@ -1,10 +1,37 @@
 #!/bin/sh
 
-if [ -z $MONITOR_SERVICES ];then
-    echo "NO MONITOR_SERVICE"
+if [ -z $NACOS_IP ];then
+    echo "NO NACOS_IP"
     return 1
 else 
-    echo "MONITOR_SERVICE = "$MONITOR_SERVICE
+    echo "NACOS_IP = "$NACOS_IP
+fi
+
+if [ -z $NACOS_PORT ];then
+    echo "NO NACOS_PORT, set it to 8848"
+    export NACOS_PORT=8848
+else 
+    echo "NACOS_PORT = "$NACOS_PORT
+fi
+
+if [ -z $NACOS_NS ];then
+    echo "NO NACOS_NS, set it to public"
+    export NACOS_NS=public
+else 
+    echo "NACOS_NS = "$NACOS_NS
+fi
+
+if [ -z $NACOS_GROUP ];then
+    echo "NO NACOS_GROUP, set it to DEFAULT_GROUP"
+    export NACOS_GROUP=DEFAULT_GROUP
+else 
+    echo "NACOS_GROUP = "$NACOS_GROUP
+fi
+
+if [ -z $MONITOR_SERVICES ];then
+    echo "NO MONITOR_SERVICES"
+else 
+    echo "MONITOR_SERVICES = "$MONITOR_SERVICES
 fi
 
 if [ -z $REPORT_DBURL ];then
@@ -40,6 +67,6 @@ if [ -z $MONITOR_INTERVAL ];then
     export MONITOR_INTERVAL=3
 fi
 
-echo "./gominotor-manager -i $MONITOR_IP -s $MONITOR_SERVICES -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN -l $MONITOR_INTERVAL"
+echo "./gomonitor-manager -i $NACOS_IP -p $NACOS_PORT -n $NACOS_NS -s $MONITOR_SERVICES -g $NACOS_GROUP -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN -l $MONITOR_INTERVAL"
 
-./gominotor-manager -l $MONITOR_INTERVAL -s $MONITOR_SERVICES -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN
+./gomonitor-manager -i $NACOS_IP -p $NACOS_PORT -n $NACOS_NS -s $MONITOR_SERVICES -g $NACOS_GROUP -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN -l $MONITOR_INTERVAL

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: busy
+  namespace: gomonitor
+  labels:
+    app: busy
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: busy
+  template:
+    metadata:
+      annotations:
+        monitor.online.daq.ihep/monitor: "true"
+        monitor.online.daq.ihep/serviceName: "busy"
+      labels:
+        app: busy
+    spec:
+      hostNetwork: true
+      containers:
+      - name: busy
+        image: 1445277435/gomonitor-testprog:v0.0.1
+        imagePullPolicy: Always
+        tty: true
+        stdin: true

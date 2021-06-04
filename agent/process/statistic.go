@@ -1,8 +1,19 @@
 package process
 
 import (
+	"gomonitor/utils"
+	"os"
+
 	"github.com/shirou/gopsutil/host"
 	"github.com/shirou/gopsutil/process"
+	"k8s.io/client-go/rest"
+)
+
+var (
+	NODE_NAME = "NODE_NAME"
+	NODE_IP   = "NODE_IP"
+	POD_NAME  = "POD_NAME"
+	POD_IP    = "POD_IP"
 )
 
 type ProcessInfo struct {
@@ -12,10 +23,13 @@ type ProcessInfo struct {
 }
 
 type ProcessTags struct {
-	ServiceName string `json:"ServiceName"`
-	HostName    string `json:"HostName"`
-	IP          string `json:"IP"`
-	ProcessName string `json:"ProcessName"`
+	ServiceName string `json:"serviceName"`
+	ProcessName string `json:"processName"`
+	ProcessIP   string `json:"processIP"`
+	NodeName    string `json:"nodeName"`
+	NodeIP      string `json:"nodeIP"`
+	PodName     string `json:"podName"`
+	PodIP       string `json:"podIP"`
 }
 
 type ProcessFields struct {
@@ -58,8 +72,18 @@ func (processInfo *ProcessInfo) Update() {
 //NewProcessInfo 构造新的ProcessInfo
 func NewProcessInfo(pid int32, monitorService string, monitorIP string) (*ProcessInfo, error) {
 	var processInfo ProcessInfo
-	hostInfo, _ := host.Info()
-	hostName := hostInfo.Hostname
+	_, err := utils.CheckInK8s()
+	var hostName string
+	var hostIP string
+	if err == rest.ErrNotInCluster {
+		hostInfo, _ := host.Info()
+		hostName = hostInfo.Hostname
+		hostIP = monitorIP
+	} else {
+		hostName = os.Getenv(NODE_NAME)
+		hostIP = os.Getenv(NODE_IP)
+	}
+
 	proce, err := process.NewProcess(pid)
 	if err != nil {
 		return nil, err
@@ -67,10 +91,13 @@ func NewProcessInfo(pid int32, monitorService string, monitorIP string) (*Proces
 	processInfo.NativateProcess = proce
 	processName, _ := proce.Name()
 	processInfo.Tags = &ProcessTags{
-		monitorService,
-		hostName,
-		monitorIP,
-		processName,
+		ServiceName: monitorService,
+		ProcessIP:   monitorIP,
+		ProcessName: processName,
+		NodeName:    hostName,
+		NodeIP:      hostIP,
+		PodName:     os.Getenv(POD_NAME),
+		PodIP:       os.Getenv(POD_IP),
 	}
 
 	createTime, _ := proce.CreateTime()

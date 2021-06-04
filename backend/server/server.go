@@ -1,7 +1,5 @@
 package server
 
-import "context"
-
 type ServerFlags struct {
 	NacosIP             string
 	NacosPort           uint64
@@ -14,8 +12,9 @@ type ServerFlags struct {
 	Organization        string
 	Bucket              string
 	Token               string
+	Interval            uint64
 }
 
 type MonitorServer interface {
-	Start(ctx context.Context)
+	Start()
 }

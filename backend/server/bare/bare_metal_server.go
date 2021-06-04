@@ -39,7 +39,7 @@ func NewBareMetalServer(config vo.NacosClientParam, flags *server.ServerFlags) (
 }
 
 //Start 启动服务
-func (server *BareMetalServer) Start(ctx context.Context) {
+func (server *BareMetalServer) Start() {
 	//在nacos注册自己
 	server.NacosNameClient.RegisterInstance(vo.RegisterInstanceParam{
 		Ip:          server.flags.NacosIP,

@@ -1,12 +1,5 @@
 #!/bin/sh
 
-if [ -z $MONITOR_PID ];then
-    echo "NO MONITOR_PID"
-    return 1
-else
-    echo "MONITOR_PID = "$MONITOR_PID
-fi
-
 if [ -z $MONITOR_SERVICE ];then
     echo "NO MONITOR_SERVICE"
     return 1
@@ -52,7 +45,15 @@ if [ -z $MONITOR_INTERVAL ];then
     export MONITOR_INTERVAL=3
 fi
 
-echo "./gomonitor-agent -p $MONITOR_PID -l $MONITOR_INTERVAL -i $MONITOR_IP -s $MONITOR_SERVICE -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN"
+echo "./gomonitor-agent -l $MONITOR_INTERVAL -i $MONITOR_IP -s $MONITOR_SERVICE -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN -p $MONITOR_PID "
 
-./gomonitor-agent -p $MONITOR_PID -l $MONITOR_INTERVAL -i $MONITOR_IP \
--s $MONITOR_SERVICE -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN
+
+if [ -z $MONITOR_PID ];then
+    echo "NO MONITOR_PID"
+    #在k8s运行不用指定pid,程序自己查找
+    ./gomonitor-agent -l $MONITOR_INTERVAL -i $MONITOR_IP -s $MONITOR_SERVICE -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN
+else
+    echo "MONITOR_PID = "$MONITOR_PID
+    ./gomonitor-agent -p $MONITOR_PID -l $MONITOR_INTERVAL -i $MONITOR_IP -s $MONITOR_SERVICE -d $REPORT_DBURL -b $REPORT_DBBUCKET -o $REPORT_DBORG -t $REPORT_DBTOKEN
+fi
+
