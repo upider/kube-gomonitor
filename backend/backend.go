@@ -35,7 +35,7 @@ func init() {
 	flag.StringVarP(&flags.NacosIP, "nacosip", "i", "", "nacos server ip")
 
 	flag.StringVarP(&flags.MonitorServiceGroup, "group", "g", "DEFAULT_GROUP", "monitor service group")
-	flag.StringArrayVarP(&flags.MonitorServices, "monitorservices", "s", nil, "monitor service names")
+	flag.StringSliceVarP(&flags.MonitorServices, "monitorservices", "s", nil, "monitor service names")
 	flag.StringVarP(&flags.NamespaceId, "namespace", "n", "public", "nacos namespace id (not namespace name)")
 	flag.Uint64VarP(&flags.Interval, "interval", "l", 3, "agent monitor interval")
 

@@ -62,7 +62,7 @@ func Netstat(protocal string, process *ProcessInfo) {
 		itemId := fmt.Sprintf("%s:%v-%s:%v", ip, port, fip, fport)
 		if v, ok := packet.PkgAcc[itemId]; ok {
 			process.Fields.NetReadRate = v["inRate"]
-			process.Fields.NetWriteRate = v["inRate"]
+			process.Fields.NetWriteRate = v["outRate"]
 		}
 	}
 }

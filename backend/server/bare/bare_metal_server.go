@@ -44,15 +44,16 @@ func (server *BareMetalServer) Start() {
 	server.NacosNameClient.RegisterInstance(vo.RegisterInstanceParam{
 		Ip:          server.flags.NacosIP,
 		Port:        server.flags.NacosPort,
-		ServiceName: "gomonitor-server",
+		ServiceName: "gomonitor-manager",
 		Enable:      false,
 		Healthy:     true,
 		Ephemeral:   true,
 		Metadata:    map[string]string{"info": "hello"},
 	})
+
 	//开启监控服务
 	for _, service := range server.flags.MonitorServices {
-		log.Info("start monitoring service: " + service)
+		log.Info("start monitoring services: " + service)
 		server.NacosNameClient.Subscribe(&vo.SubscribeParam{
 			ServiceName:       service,
 			GroupName:         server.flags.MonitorServiceGroup,
@@ -133,15 +134,15 @@ func (server *BareMetalServer) startMonitorProg(ip string, pid string, serviceNa
 		return
 	}
 
-	err = cli.Close()
-	if err != nil {
-		log.Error(err)
-		return
-	}
-
 	err = cli.ContainerStart(ctx, container.ID, types.ContainerStartOptions{})
 	if err != nil {
 		log.Error("container start error: " + err.Error())
+		return
+	}
+
+	err = cli.Close()
+	if err != nil {
+		log.Error(err)
 		return
 	}
 }

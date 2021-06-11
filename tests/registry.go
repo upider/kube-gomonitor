@@ -50,6 +50,7 @@ func bareRegistry() {
 		Ip:          "192.168.37.204",
 		Port:        8848,
 		ServiceName: "test-service",
+		GroupName:   "DEFAULT_GROUP",
 		Weight:      10,
 		Enable:      true,
 		Healthy:     true,
