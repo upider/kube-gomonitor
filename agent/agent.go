@@ -2,53 +2,48 @@ package main
 
 import (
 	"context"
-	"gomonitor/agent/packet"
-	"gomonitor/agent/process"
-	"gomonitor/agent/report"
-	"gomonitor/utils"
+	"kube-gomonitor/agent/internal"
+	"kube-gomonitor/agent/packet"
+	"kube-gomonitor/agent/process"
+	"kube-gomonitor/agent/report"
+	"kube-gomonitor/pkg"
 	"os"
 	"os/signal"
 	"time"
 
+	"github.com/nacos-group/nacos-sdk-go/clients/naming_client"
+	"github.com/nacos-group/nacos-sdk-go/vo"
 	gpprocess "github.com/shirou/gopsutil/process"
+	"k8s.io/client-go/rest"
 
 	log "github.com/sirupsen/logrus"
-	"k8s.io/client-go/rest"
 
 	"syscall"
 
 	flag "github.com/spf13/pflag"
 )
 
-type cmdFlags struct {
-	Help            bool
-	MonitorIP       string
-	MonitorPid      int32
-	MonitorService  string
-	MonitorInterval int64
-	DBUrl           string
-	Organization    string
-	Bucket          string
-	Token           string
-}
-
 var (
-	flags    cmdFlags
-	reporter report.Reporter
+	flags         internal.CmdFlags
+	reporter      report.Reporter
+	namingClients []naming_client.INamingClient
 )
 
 func init() {
 	flag.BoolVarP(&flags.Help, "help", "h", false, "gomonitor help")
 
-	flag.StringVarP(&flags.MonitorIP, "monitorip", "i", "", "ip to be monitored")
-	flag.StringVarP(&flags.MonitorService, "monitorservice", "s", "", "service name to be monitored")
-	flag.Int32VarP(&flags.MonitorPid, "monitorpid", "p", -1, "pid to be monitored")
-	flag.Int64VarP(&flags.MonitorInterval, "monitorinterval", "l", 1, "interval seconds to send monitor info")
+	flag.Uint64Var(&flags.NacosPort, "nacosPort", 8848, "nacos server port")
+	flag.StringSliceVar(&flags.NacosIPs, "nacosIPs", nil, "nacos server ips")
 
-	flag.StringVarP(&flags.DBUrl, "dburl", "d", "", "data base url")
-	flag.StringVarP(&flags.Bucket, "bucket", "b", "", "data base bucket for influxdb")
-	flag.StringVarP(&flags.Organization, "organization", "o", "", "data base org for influxdb")
-	flag.StringVarP(&flags.Token, "token", "t", "", "data base token for influxdb")
+	flag.StringVar(&flags.MonitorIP, "monitorIP", "", "ip to be monitored")
+	flag.StringVar(&flags.MonitorService, "monitorService", "", "service name to be monitored")
+	flag.Int32Var(&flags.MonitorPid, "monitorPid", -1, "pid to be monitored")
+	flag.Int64Var(&flags.MonitorInterval, "monitorInterval", 1, "interval seconds to send monitor info")
+
+	flag.StringVar(&flags.DBUrl, "dburl", "", "data base url")
+	flag.StringVar(&flags.Bucket, "bucket", "", "data base bucket for influxdb")
+	flag.StringVar(&flags.Organization, "organization", "", "data base org for influxdb")
+	flag.StringVar(&flags.Token, "token", "", "data base token for influxdb")
 }
 
 func main() {
@@ -61,9 +56,9 @@ func main() {
 
 	var monitorpid int32
 
-	_, err := utils.CheckInK8s()
+	_, err := pkg.GetKubeConfig()
 	if err == rest.ErrNotInCluster {
-		//not running in k8s
+		//running on bare metal
 		log.Info("running on bare metal")
 		if flags.Help || flags.MonitorIP == "" || flags.MonitorPid == -1 ||
 			flags.MonitorService == "" || flags.Bucket == "" || flags.DBUrl == "" ||
@@ -73,6 +68,24 @@ func main() {
 		}
 
 		monitorpid = flags.MonitorPid
+		// 在nacos注册自己
+		if flags.NacosIPs != nil {
+			namingClients, err := pkg.GetNacosNamingClients(flags.NacosIPs, flags.NacosPort, []string{"DEFAULT_GROUP"})
+			if err != nil {
+				log.Error(err)
+				return
+			}
+			namingClients[0].RegisterInstance(vo.RegisterInstanceParam{
+				Ip:          flags.MonitorIP,
+				Port:        0,
+				ServiceName: "kube-gomonitor agent",
+				Enable:      false,
+				Healthy:     true,
+				Ephemeral:   true,
+				Metadata:    map[string]string{"kube-gomonitor-agent": "hello"},
+			})
+		}
+
 	} else {
 		//running in k8s
 		log.Info("running on kubernetes")
@@ -103,11 +116,19 @@ func main() {
 		log.Error(err)
 		return
 	}
-	reporter = report.NewInfluxDBReporter(flags.DBUrl, flags.Organization, flags.Bucket, flags.Token, flags.MonitorInterval, processInfo)
+	reporter = report.NewInfluxDBReporter(&flags, processInfo)
 	defer reporter.Close()
 	reporter.Start(ctx)
 
 	<-stopCh
 	cancel()
+	if err == rest.ErrNotInCluster {
+		namingClients[0].DeregisterInstance(vo.DeregisterInstanceParam{
+			Ip:          flags.MonitorIP,
+			Port:        0,
+			ServiceName: "kube-gomonitor backend",
+			Ephemeral:   true,
+		})
+	}
 	time.Sleep(5 * time.Second)
 }

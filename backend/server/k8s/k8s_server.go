@@ -1,7 +1,8 @@
 package k8s
 
 import (
-	"gomonitor/backend/server/k8s/webhooks"
+	"kube-gomonitor/backend/server"
+	"kube-gomonitor/backend/server/k8s/webhooks"
 	"os"
 
 	"k8s.io/apimachinery/pkg/runtime"
@@ -72,11 +73,11 @@ func (server *KServer) Start() {
 	}
 }
 
-func NewKServer(url string, bucket string, org string, token string) *KServer {
+func NewKServer(flags *server.ServerFlags) *KServer {
 	return &KServer{
-		url:    url,
-		bucket: bucket,
-		org:    org,
-		token:  token,
+		url:    flags.DBUrl,
+		bucket: flags.Bucket,
+		org:    flags.Organization,
+		token:  flags.Token,
 	}
 }

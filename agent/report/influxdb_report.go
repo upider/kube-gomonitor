@@ -2,8 +2,9 @@ package report
 
 import (
 	"context"
-	"gomonitor/agent/process"
-	"gomonitor/utils"
+	"kube-gomonitor/agent/internal"
+	"kube-gomonitor/agent/process"
+	"kube-gomonitor/pkg"
 	"time"
 
 	influxdb2 "github.com/influxdata/influxdb-client-go/v2"
@@ -51,8 +52,8 @@ func (reporter *InfluxDBReporter) Close() {
 //Report send process info to db
 func (reporter *InfluxDBReporter) Report() {
 	// create point
-	tags := utils.Tags2Map(*reporter.processInfo.Tags)
-	fileds := utils.Fields2Map(*reporter.processInfo.Fields)
+	tags := pkg.Tags2Map(*reporter.processInfo.Tags)
+	fileds := pkg.Fields2Map(*reporter.processInfo.Fields)
 	p := influxdb2.NewPoint(
 		"service-instance",
 		tags,
@@ -62,19 +63,18 @@ func (reporter *InfluxDBReporter) Report() {
 	reporter.Writer.WritePoint(p)
 }
 
-func NewInfluxDBReporter(url string, organization string,
-	bucket string, token string, interval int64, info *process.ProcessInfo) *InfluxDBReporter {
-	client := influxdb2.NewClient(url, token)
-	writer := client.WriteAPI(organization, bucket)
+func NewInfluxDBReporter(flags *internal.CmdFlags, info *process.ProcessInfo) *InfluxDBReporter {
+	client := influxdb2.NewClient(flags.DBUrl, flags.Token)
+	writer := client.WriteAPI(flags.Organization, flags.Bucket)
 	influxDbClient := InfluxDBReporter{
 		client,
 		writer,
-		url,
-		organization,
-		bucket,
-		token,
+		flags.DBUrl,
+		flags.Organization,
+		flags.Bucket,
+		flags.Token,
 		info,
-		interval,
+		flags.MonitorInterval,
 	}
 	return &influxDbClient
 }

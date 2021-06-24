@@ -2,8 +2,8 @@ package process
 
 import (
 	"fmt"
-	"gomonitor/agent/packet"
 	"io/ioutil"
+	"kube-gomonitor/agent/packet"
 	"os"
 	"path/filepath"
 	"regexp"

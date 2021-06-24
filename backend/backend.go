@@ -1,17 +1,15 @@
 package main
 
 import (
-	"gomonitor/backend/server"
-	"gomonitor/backend/server/bare"
-	"gomonitor/backend/server/k8s"
-	"gomonitor/utils"
+	"kube-gomonitor/backend/server"
+	"kube-gomonitor/backend/server/bare"
+	"kube-gomonitor/backend/server/k8s"
+	"kube-gomonitor/pkg"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/nacos-group/nacos-sdk-go/common/constant"
-	"github.com/nacos-group/nacos-sdk-go/vo"
 	log "github.com/sirupsen/logrus"
 	flag "github.com/spf13/pflag"
 	"k8s.io/client-go/rest"
@@ -19,69 +17,43 @@ import (
 
 var (
 	flags server.ServerFlags
-	//nacos默认配置
-	logDir     string = "/tmp/nacos/log"
-	cacheDir   string = "/tmp/nacos/cache"
-	rotateTime string = "12h"
-	maxAge     int64  = 3
-	logLevel   string = "info"
-	timeoutMs  uint64 = 5000
 	//server
 	monitorServer server.MonitorServer
 )
 
 func init() {
-	flag.Uint64VarP(&flags.NacosPort, "nacosport", "p", 8848, "nacos server port")
-	flag.StringVarP(&flags.NacosIP, "nacosip", "i", "", "nacos server ip")
+	flag.Uint64Var(&flags.NacosPort, "nacosPort", 8848, "nacos server port")
+	flag.StringSliceVar(&flags.NacosIPs, "nacosIPs", nil, "nacos server ips")
 
-	flag.StringVarP(&flags.MonitorServiceGroup, "group", "g", "DEFAULT_GROUP", "monitor service group")
-	flag.StringSliceVarP(&flags.MonitorServices, "monitorservices", "s", nil, "monitor service names")
-	flag.StringVarP(&flags.NamespaceId, "namespace", "n", "public", "nacos namespace id (not namespace name)")
-	flag.Uint64VarP(&flags.Interval, "interval", "l", 3, "agent monitor interval")
+	flag.StringVar(&flags.AgentImage, "agentImage", "1445277435/kube-gomonitor-agent:v0.0.1", "monitor agent docker image")
+	flag.StringSliceVar(&flags.MonitorServiceGroups, "groups", []string{"DEFAULT_GROUP"}, "monitor service groups")
+	flag.StringSliceVar(&flags.MonitorServices, "services", nil, "monitor service names")
+	flag.StringSliceVar(&flags.Namespaces, "namespaces", []string{"public"}, "nacos namespace ids")
+	flag.Uint64Var(&flags.Interval, "interval", 3, "agent monitor interval")
 
-	flag.StringVarP(&flags.DBUrl, "dburl", "d", "", "data base url")
-	flag.StringVarP(&flags.Bucket, "bucket", "b", "", "data base bucket for influxdb")
-	flag.StringVarP(&flags.Organization, "organization", "o", "", "data base org for influxdb")
-	flag.StringVarP(&flags.Token, "token", "t", "", "data base token for influxdb")
+	flag.StringVar(&flags.DBUrl, "dburl", "", "data base url for influxdb")
+	flag.StringVar(&flags.Bucket, "bucket", "", "data base bucket for influxdb")
+	flag.StringVar(&flags.Organization, "organization", "", "data base org for influxdb")
+	flag.StringVar(&flags.Token, "token", "", "data base token for influxdb")
 }
 
 func main() {
 	signalChan := make(chan os.Signal, 1)
 	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
 
-	_, err := utils.CheckInK8s()
+	_, err := pkg.GetKubeConfig()
 
 	if err == rest.ErrNotInCluster {
 		flag.Parse()
-		if flags.NacosIP == "" || flags.MonitorServices == nil || flags.DBUrl == "" ||
+		if flags.NacosIPs == nil || flags.MonitorServices == nil || flags.DBUrl == "" ||
 			flags.Bucket == "" || flags.Organization == "" || flags.Token == "" {
 			flag.Usage()
 			return
 		}
 
 		log.Info("running on bare metal")
-		//get nacos config
-		sc := []constant.ServerConfig{
-			{
-				IpAddr: flags.NacosIP,
-				Port:   flags.NacosPort,
-			},
-		}
-		cc := constant.ClientConfig{
-			NamespaceId:         flags.NamespaceId, //namespace id
-			TimeoutMs:           timeoutMs,
-			NotLoadCacheAtStart: true,
-			LogDir:              logDir,
-			CacheDir:            cacheDir,
-			RotateTime:          rotateTime,
-			MaxAge:              maxAge,
-			LogLevel:            logLevel,
-		}
 
-		monitorServer, err = bare.NewBareMetalServer(vo.NacosClientParam{
-			ClientConfig:  &cc,
-			ServerConfigs: sc,
-		}, &flags)
+		monitorServer, err = bare.NewBareMetalServer(&flags)
 
 		if err != nil {
 			log.Errorln(err)
@@ -102,7 +74,7 @@ func main() {
 		}
 
 		log.Info("running on kubernetes")
-		monitorServer = k8s.NewKServer(flags.DBUrl, flags.Bucket, flags.Organization, flags.Token)
+		monitorServer = k8s.NewKServer(&flags)
 		monitorServer.Start()
 
 		<-signalChan

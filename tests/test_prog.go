@@ -1,7 +1,7 @@
 package main
 
 import (
-	"gomonitor/utils"
+	"kube-gomonitor/pkg"
 	"os"
 	"os/signal"
 	"syscall"
@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	_, err := utils.CheckInK8s()
+	_, err := pkg.GetKubeConfig()
 	if err == rest.ErrNotInCluster {
 		bareRegistry()
 	}

@@ -1,7 +1,7 @@
 package process
 
 import (
-	"gomonitor/utils"
+	"kube-gomonitor/pkg"
 	"os"
 
 	"github.com/shirou/gopsutil/host"
@@ -72,7 +72,7 @@ func (processInfo *ProcessInfo) Update() {
 //NewProcessInfo 构造新的ProcessInfo
 func NewProcessInfo(pid int32, monitorService string, monitorIP string) (*ProcessInfo, error) {
 	var processInfo ProcessInfo
-	_, err := utils.CheckInK8s()
+	_, err := pkg.GetKubeConfig()
 	var hostName string
 	var hostIP string
 	if err == rest.ErrNotInCluster {

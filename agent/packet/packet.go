@@ -99,7 +99,7 @@ func NetSniff(ctx context.Context, ipAddr string) {
 
 			err := parser.DecodeLayers(packet.Data(), &foundLayerTypes)
 			if err != nil {
-				log.Error("Trouble decoding layers: ", err)
+				log.Errorf("Trouble decoding layers: %s", err.Error())
 			}
 
 			for _, layerType := range foundLayerTypes {
@@ -166,7 +166,7 @@ func accumulator(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			log.Warningln("net accumulator thread is stop.")
+			log.Warningln("net accumulator thread is stoping...")
 			Start = false
 			return
 		default:

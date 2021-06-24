@@ -9,25 +9,20 @@ help: ## Display this help.
 ##@ Build
 
 build: ## Build agent and manager binary.
-	go build -o backend/gomonitor-manager backend/backend.go
-	go build -o agent/gomonitor-agent agent/agent.go
-	go build -o tests/gomonitor-testprog tests/registry.go tests/busy_loop.go tests/test_prog.go
+	go build -o bin/kube-gomonitor-backend backend/backend.go
+	go build -o bin/kube-gomonitor-agent agent/agent.go
+	go build -o bin/kube-gomonitor-testprog tests/registry.go tests/busy_loop.go tests/test_prog.go
 
 docker-build: ## Build docker image with the agent and manager.
-	docker build -t centos:gopacket -f agent/GopacketDockerfile .
-	docker build -t gomonitor-manager:${TAG} -f backend/Dockerfile .
-	docker build -t gomonitor-agent:${TAG} -f agent/Dockerfile .
-	docker build -t gomonitor-testprog:${TAG} -f tests/Dockerfile .
-
-docker-tag: ## Tag docker image for 1445277435
-	docker tag gomonitor-manager:${TAG} 1445277435/gomonitor-manager:${TAG}
-	docker tag gomonitor-agent:${TAG} 1445277435/gomonitor-agent:${TAG}
-	docker tag gomonitor-testprog:${TAG} 1445277435/gomonitor-testprog:${TAG}
+	cd agent && docker build -t 1445277435/centos:gopacket -f docker/Dockerfile.Gopacket ..
+	cd agent && docker build -t 1445277435/kube-gomonitor-agent:${TAG} -f docker/Dockerfile ..
+	cd backend && docker build -t 1445277435/kube-gomonitor-backend:${TAG} -f docker/Dockerfile ..
+	cd tests && docker build -t 1445277435/kube-gomonitor-testprog:${TAG} -f docker/Dockerfile ..
 
 docker-push: ## Push docker image with the agent and manager.
-	docker push 1445277435/gomonitor-agent:${TAG}
-	docker push 1445277435/gomonitor-manager:${TAG}
-	docker push 1445277435/gomonitor-testprog:${TAG}
+	docker push 1445277435/kube-gomonitor-agent:${TAG}
+	docker push 1445277435/kube-gomonitor-backend:${TAG}
+	docker push 1445277435/kube-gomonitor-testprog:${TAG}
 
 cert: ## generate cert for webhook
-	cd backend/config/cert/ && chmod +x generateCert.sh && ./generateCert.sh
+	cd backend/deployment/cert/ && chmod +x generateCert.sh && ./generateCert.sh

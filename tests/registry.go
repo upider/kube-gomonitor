@@ -9,12 +9,6 @@ import (
 	"github.com/nacos-group/nacos-sdk-go/vo"
 )
 
-type monitorConfig struct {
-	Pid         int    `json:"pid"`
-	ServiceName string `json:"serviceName"`
-	IP          string `json:"ip"`
-}
-
 func bareRegistry() {
 	sc := []constant.ServerConfig{
 		{
